@@ -1,0 +1,77 @@
+<RCC>
+    <qresource prefix="/">
+        <file>boss/left1.png</file>
+        <file>boss/left2.png</file>
+        <file>boss/left3.png</file>
+        <file>boss/left4.png</file>
+        <file>boss/left5.png</file>
+        <file>boss/left6.png</file>
+        <file>boss/right1.png</file>
+        <file>boss/right2.png</file>
+        <file>boss/right3.png</file>
+        <file>boss/right4.png</file>
+        <file>boss/right5.png</file>
+        <file>boss/right6.png</file>
+        <file>bullte/bullte2(1).png</file>
+        <file>bullte/bulltue3 (2).png</file>
+        <file>bullte/bulltue3(1).png</file>
+        <file>bullte/bulltue3.png</file>
+        <file>bullte/bullute11.png</file>
+        <file>bullte/haha.png</file>
+        <file>gamewindow/0.png</file>
+        <file>gamewindow/1.png</file>
+        <file>gamewindow/gamewindow.1.png</file>
+        <file>gamewindow/gamewindow2.png</file>
+        <file>gamewindow/gamewindow3.png</file>
+        <file>gamewindow/guanqia.window.png</file>
+        <file>monster/boss(1).png</file>
+        <file>monster/monster1.png</file>
+        <file>monster/monster2.png</file>
+        <file>monster/monster3.png</file>
+        <file>monster/monster5.png</file>
+        <file>monster/tujibing1(1)(1).png</file>
+        <file>monster/tujibing1.png</file>
+        <file>obstacle/huo (2).png</file>
+        <file>obstacle/obstacle1(2).jpg</file>
+        <file>obstacle/obstacle2.jpg</file>
+        <file>obstacle/obstacle3(1).jpg</file>
+        <file>qishi/2.png</file>
+        <file>qishi/3.png</file>
+        <file>qishi/4.png</file>
+        <file>qishi/5.png</file>
+        <file>qishi/6.png</file>
+        <file>qishi/7.png</file>
+        <file>qishi/8.png</file>
+        <file>qishi/9.png</file>
+        <file>qishi/10.png</file>
+        <file>roll/left0.png</file>
+        <file>roll/left1.png</file>
+        <file>roll/left2.png</file>
+        <file>roll/left3.png</file>
+        <file>roll/left4.png</file>
+        <file>roll/left5.png</file>
+        <file>roll/left6.png</file>
+        <file>roll/left7.png</file>
+        <file>roll/right0.png</file>
+        <file>roll/right1.png</file>
+        <file>roll/right2.png</file>
+        <file>roll/right3.png</file>
+        <file>roll/right4.png</file>
+        <file>roll/right5.png</file>
+        <file>roll/right6.png</file>
+        <file>roll/right7.png</file>
+        <file>roll/up0.png</file>
+        <file>roll/up1.png</file>
+        <file>roll/up2.png</file>
+        <file>roll/up3.png</file>
+        <file>roll/up4.png</file>
+        <file>roll/up5.png</file>
+        <file>roll/up6.png</file>
+        <file>roll/up7.png</file>
+        <file>shengyin/FurElise (1).mp3</file>
+        <file>shengyin/game_bgm.mp3</file>
+        <file>shengyin/haha.mp3</file>
+        <file>shengyin/shouji.mp3</file>
+        <file>shengyin/shoujiha (2).mp3</file>
+    </qresource>
+</RCC>
