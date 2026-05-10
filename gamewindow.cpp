@@ -361,23 +361,14 @@ void GameWindow::level1(){
     m_monsterList.last()->setpoints(400, 180);
 
 
-    m_monsterList.append(new monster(1));
-    m_monsterList.last()->setpoints(550, 220);
-
-    m_monsterList.append(new monster(1));
-    m_monsterList.last()->setpoints(700, 160);
 
     /*m_monsterList.append(new monster(1));
     m_monsterList.last()->setpoints(550, 220);
     m_monsterList.append(new monster(1));
     m_monsterList.last()->setpoints(700, 160);*/
-    m_monsterList.append(new monster(2));
-    m_monsterList.last()->setpoints(900, 400);
+
     m_monsterList.append(new monster(2));
     m_monsterList.last()->setpoints(1150, 750);
-
-    m_monsterList.append(new monster(3));
-    m_monsterList.last()->setpoints(1350, 900);
 
     m_monsterList.append(new monster(3));
     m_monsterList.last()->setpoints(1500, 680);}
@@ -746,9 +737,6 @@ void GameWindow::gameupdate(){
                     m_bullets.push_back(new bullet(bx, by, hx/len+0.42, hy/len+0.66, 5));
                     m_bullets.push_back(new bullet(bx, by, hx/len-0.255, hy/len-0.88, 5));
                     m_bullets.push_back(new bullet(bx, by, hx/len+0.7, hy/len-0.11, 5));
-                    m_bullets.push_back(new bullet(bx, by, hx/len+0.12, hy/len+0.32, 5));
-                    m_bullets.push_back(new bullet(bx, by, hx/len-0.26, hy/len-0.19, 5));
-                    m_bullets.push_back(new bullet(bx, by, hx/len+0.33, hy/len-0.22, 5));
                     m_bullets.push_back(new bullet(bx, by, hx/len+0.26, hy/len+0.52, 5));
                     m_bullets.push_back(new bullet(bx, by, hx/len-0.22, hy/len-0.12, 5));
                     m_bullets.push_back(new bullet(bx, by, hx/len+0.17, hy/len, 5));
