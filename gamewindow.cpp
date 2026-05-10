@@ -162,48 +162,30 @@ GameWindow::GameWindow(int level,QWidget *parent)
 class FailMessageBox : public QMessageBox
 {
 public:
-    explicit FailMessageBox(QWidget *parent = nullptr) : QMessageBox(parent) {
-    this->setFixedSize(1000, 700);
-    this->setStyleSheet(R"(
-            QMessageBox {
-                background-color: #f8f8f8;
-                font-family: 微软雅黑;
-                font-size: 16px; /* 全局文字大小 */
-                padding: 20px;    /* 内边距，让内容不贴边 */
-            }
-            QMessageBox QLabel {
-                font-size: 18px; /* 提示文字大小 */
-                color: #333;
-            }
-            QMessageBox QPushButton {
-                background-color: #ff4444;
-                color: white;
-                font-size: 14px;
-                border: none;
-                padding: 10px 30px; /* 按钮内边距，增大按钮 */
-                border-radius: 8px;
-                margin-top: 20px;   /* 按钮和文字拉开距离 */
-            }
-            QPushButton:hover {
-                background-color: #ff6666;
-            }
-        )");}
-protected:
-    // 重写鼠标按下事件：任意鼠标键都关闭弹窗
-
-    void mousePressEvent(QMouseEvent *event) override
+    explicit FailMessageBox(QWidget *parent = nullptr) : QMessageBox(parent)
     {
-        if (event->button() == Qt::LeftButton ||
-            event->button() == Qt::RightButton ||
-            event->button() == Qt::MiddleButton)
-        {
+        setFixedSize(800, 500);
+        setWindowTitle("游戏失败");
+        setText("废物！游戏失败\n骑士阵亡");
 
-            this->accept();
-
-            this->accept(); // 关闭弹窗
-        }
-        QMessageBox::mousePressEvent(event); }
+        // 关键：显示图片！
+        QPixmap pix(":/monster/nainai.png");
+        setIconPixmap(pix.scaled(200, 200, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    }
 };
+
+// 死亡函数
+void GameWindow::playerdead()
+{
+    if (gametimer) gametimer->stop();
+    clearLevel();
+
+    FailMessageBox failBox;
+    failBox.exec();
+
+    if (m_gameMusic) m_gameMusic->stop();
+    emit playerdie();
+}
 void GameWindow::drawSkill(QPainter *p, int x, int y, int size,
 
                            QPixmap &icon, int leftMs, int totalMs
@@ -286,71 +268,32 @@ void GameWindow::drawHealSkill(QPainter *p, int x, int y, int size, int leftMs, 
 
     p->restore();
 }
-void GameWindow::playerdead()
+class WinMessageBox : public QMessageBox
+{
+public:
+    explicit WinMessageBox(QWidget *parent = nullptr) : QMessageBox(parent)
+    {
+        setFixedSize(800, 500);
+        setWindowTitle("游戏胜利");
+        setText("恭喜你！游戏胜利\n成功通关！");
+
+        // 胜利图片（你自己改路径也行）
+        QPixmap pix(":/monster/naima.png"); // 你可以换成你的胜利图片
+        setIconPixmap(pix.scaled(200, 200, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    }
+};
+void GameWindow::monsterdead()
 {
     if (gametimer) gametimer->stop();
     clearLevel();
-    FailMessageBox failBox;
-    failBox.setWindowTitle("废物！游戏失败");
-    failBox.setText("<font size='14' color='#d32f2f'>废物！游戏失败</font><br>骑士阵亡<br>点击鼠标任意键返回主界面");
-    failBox.setWindowTitle("废物！游戏失败");
-    failBox.setText("<font size='14' color='#d32f2f'>游戏失败</font><br>骑士阵亡<br>点击鼠标任意键返回主界面");
-    QSpacerItem* hSpacer = new QSpacerItem(400, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    QGridLayout* layout = (QGridLayout*)failBox.layout();
-    layout->addItem(hSpacer, layout->rowCount(), 0, 1, layout->columnCount());
-    failBox.setStyleSheet(R"(
-    QMessageBox {
-        background-color: #1e1e1e;
-        color: white;
-        font-family: 微软雅黑;
-        font-size: 12px;
-    }
-    QPushButton {
-        background-color: #d32f2f;
-        color: white;
-        border: none;
-        padding: 6px 18px;
-        border-radius: 4px;
-    }
-    QPushButton:hover {
-        background-color: #ff5252;
-    }
-    )");
-    m_gameMusic->stop();
-        failBox.exec();
-    emit playerdie();
-}
-void GameWindow::monsterdead(){
-    if (gametimer) gametimer->stop();
-    clearLevel();
-    FailMessageBox failBox;
-    failBox.setWindowTitle("游戏胜利！");
-    failBox.setText("<font size='14' color='#d32f2f'>游戏胜利</font><br>怪物清除完毕<br>点击鼠标任意键返回主界面");
-    QSpacerItem* hSpacer = new QSpacerItem(400, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    QGridLayout* layout = (QGridLayout*)failBox.layout();
-    layout->addItem(hSpacer, layout->rowCount(), 0, 1, layout->columnCount());
-    failBox.setStyleSheet(R"(
-    QMessageBox {
-        background-color: #1e1e1e;
-        color: white;
-        font-family: 微软雅黑;
-        font-size: 12px;
-    }
-    QPushButton {
-        background-color: #d32f2f;
-        color: white;
-        border: none;
-        padding: 6px 18px;
-        border-radius: 4px;
-    }
-    QPushButton:hover {
-        background-color: #ff5252;
-    }
-    )");
-    m_gameMusic->stop();
-    failBox.exec();
+    WinMessageBox winBox;
+    winBox.exec();
+
+    if (m_gameMusic) m_gameMusic->stop();
+    // 这里可以加胜利后的逻辑
     emit monsterdie();
 }
+
 void GameWindow::shootbullet(){
     if(time2>0){
         return ;

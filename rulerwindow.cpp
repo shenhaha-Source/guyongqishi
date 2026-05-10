@@ -50,7 +50,8 @@ void rulerwindow::paintEvent(QPaintEvent *event)
     painter.drawText(leftStartX + 25, baseY + 4*lineHeight, "D  -  向右移动");
     painter.drawText(leftStartX + 25, baseY + 5*lineHeight, "K  -  攻击键位");
     painter.drawText(leftStartX + 25, baseY + 6*lineHeight, "L  -  技能键位");
-
+    painter.drawText(leftStartX + 25, baseY + 7*lineHeight, "P -  回血键位");
+    painter.drawText(leftStartX + 25, baseY + 8*lineHeight, "M  -  冲刺键位");
     // 右侧：关卡规则
     painter.setPen(QColor(120, 180, 255));
     painter.setFont(QFont("微软雅黑", 20, QFont::Medium));

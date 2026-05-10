@@ -73,5 +73,7 @@
         <file>shengyin/haha.mp3</file>
         <file>shengyin/shouji.mp3</file>
         <file>shengyin/shoujiha (2).mp3</file>
+        <file>monster/nainai.png</file>
+        <file>monster/naima.png</file>
     </qresource>
 </RCC>
