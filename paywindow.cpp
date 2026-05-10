@@ -2,8 +2,6 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QMessageBox>
-
-// 👇 必须加！全局变量声明
 extern int g_playerAttack;
 extern int g_playerMaxHp;
 
@@ -94,8 +92,6 @@ void PayWindow::pay3Yuan()
     QDesktopServices::openUrl(QUrl(url));
     labelTip->setText("已打开6元赞助页面，赞助后自动领兑换码");
 }
-
-// 兑换核心（已完全修复）
 void PayWindow::redeemCode()
 {
     QString code = editCode->text().trimmed();
@@ -113,13 +109,8 @@ void PayWindow::redeemCode()
     if (code1List.contains(code)) {
         usedCode.append(code);
         labelTip->setText("✅ 5元礼包兑换成功！攻击×2 血量×3！");
-
-        // ======================
-        // 这里直接修改全局变量！
-        // ======================
         g_playerAttack = 2;
         g_playerMaxHp  = 45;
-
         emit oneYuanReward();
         editCode->clear();
         return;
@@ -129,10 +120,6 @@ void PayWindow::redeemCode()
     if (code3List.contains(code)) {
         usedCode.append(code);
         labelTip->setText("✅ 6元礼包兑换成功！伤害翻倍+血量提升！");
-
-        // ======================
-        // 这里直接修改全局变量！
-        // ======================
         g_playerAttack = 4;
         g_playerMaxHp  = 100;
 

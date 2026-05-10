@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>孤勇骑士 — 2D闯关小游戏</title>
+    <style>
+        /* ===== Reset & Base ===== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+            background: linear-gradient(165deg, #1a0a12 0%, #2d0f1e 20%, #3d1520 40%, #2a1a1a 60%, #1a0a0a 100%);
+            background-attachment: fixed;
+            color: #e0e0e0;
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+
+        ::selection { background: rgba(255,150,100,0.25); color: #fff; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a0a12; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,150,100,0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,150,100,0.35); }
+
+        /* ===== Particle Canvas ===== */
+        #particles {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===== Hero ===== */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background:
+                radial-gradient(ellipse 80% 50% at 30% 30%, rgba(255,140,50,0.10) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 60% at 70% 50%, rgba(220,60,80,0.08) 0%, transparent 55%),
+                radial-gradient(ellipse 90% 40% at 50% 85%, rgba(255,200,50,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse 50% 50% at 20% 70%, rgba(200,80,160,0.06) 0%, transparent 50%),
+                linear-gradient(170deg, #1f0a18 0%, #3a1520 25%, #4d1a24 45%, #2d1414 70%, #1a0808 100%);
+            overflow: hidden;
+            padding: 2rem;
+            z-index: 1;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 2px,
+                rgba(255,255,255,0.008) 2px,
+                rgba(255,255,255,0.008) 3px
+            );
+            pointer-events: none;
+        }
+
+        .hero-content { position: relative; z-index: 2; }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 0.5rem 1.8rem;
+            border: 1px solid rgba(255,180,100,0.2);
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            letter-spacing: 0.35em;
+            color: #ffcc66;
+            background: rgba(255,150,50,0.04);
+            margin-bottom: 1.8rem;
+            text-transform: uppercase;
+            backdrop-filter: blur(4px);
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .hero h1 {
+            font-size: clamp(3.5rem, 10vw, 7rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, #ffcc44 0%, #ff8844 25%, #ff5544 50%, #ff8844 75%, #ffcc44 100%);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 5s linear infinite;
+            letter-spacing: 0.05em;
+            line-height: 1.1;
+            filter: drop-shadow(0 0 60px rgba(255,150,50,0.12));
+        }
+        @keyframes shimmer {
+            0% { background-position: 0% center; }
+            100% { background-position: 300% center; }
+        }
+
+        .hero .subtitle {
+            font-size: clamp(1rem, 2.2vw, 1.4rem);
+            color: rgba(255,255,255,0.45);
+            margin-top: 1rem;
+            letter-spacing: 0.15em;
+            font-weight: 300;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .hero .subtitle strong { color: rgba(255,200,100,0.8); font-weight: 500; }
+
+        .hero .tech-stack {
+            margin-top: 2.5rem;
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+        .hero .tech-stack span {
+            padding: 0.4rem 1.4rem;
+            border-radius: 2rem;
+            font-size: 0.78rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.4);
+            transition: all 0.3s;
+            letter-spacing: 0.05em;
+        }
+        .hero .tech-stack span:hover {
+            border-color: rgba(255,180,100,0.2);
+            color: rgba(255,180,100,0.6);
+            background: rgba(255,150,50,0.04);
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.6rem;
+            color: rgba(255,255,255,0.2);
+            font-size: 0.7rem;
+            letter-spacing: 0.25em;
+            animation: float 2.5s ease-in-out infinite;
+            z-index: 2;
+        }
+        .scroll-indicator .arrow {
+            width: 1.2rem; height: 1.2rem;
+            border-right: 1.5px solid rgba(255,255,255,0.2);
+            border-bottom: 1.5px solid rgba(255,255,255,0.2);
+            transform: rotate(45deg);
+        }
+        @keyframes float {
+            0%,100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(10px); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== Nav ===== */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(30,12,20,0.82);
+            backdrop-filter: blur(16px) saturate(1.5);
+            -webkit-backdrop-filter: blur(16px) saturate(1.5);
+            border-bottom: 1px solid rgba(255,150,100,0.06);
+            padding: 0 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.2rem;
+            flex-wrap: wrap;
+        }
+        nav a {
+            color: rgba(255,255,255,0.35);
+            text-decoration: none;
+            font-size: 0.82rem;
+            padding: 0.85rem 1rem;
+            transition: color 0.3s, border-color 0.3s;
+            border-bottom: 2px solid transparent;
+            letter-spacing: 0.05em;
+        }
+        nav a:hover { color: #ffd700; border-bottom-color: #ffd700; }
+
+        /* ===== Sections (global) ===== */
+        section {
+            position: relative;
+            z-index: 1;
+            padding: 5rem 2rem;
+            max-width: 1120px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            margin-bottom: 3rem;
+        }
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #ffd700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .section-title .num {
+            font-size: 0.85rem;
+            color: rgba(255,150,100,0.25);
+            font-weight: 500;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            letter-spacing: 0.1em;
+        }
+        .section-divider {
+            width: 3.5rem;
+            height: 3px;
+            background: linear-gradient(90deg, #ffd700 0%, rgba(255,215,0,0.1) 100%);
+            margin: 0.6rem 0 0 0;
+            border-radius: 2px;
+        }
+        .section-desc {
+            color: rgba(255,255,255,0.5);
+            margin-top: 0.8rem;
+            font-size: 0.95rem;
+        }
+
+        /* Content wrapper for alternating backgrounds */
+        .section-bg {
+            position: relative;
+            z-index: 1;
+        }
+        .section-bg:nth-child(even) {
+            background: linear-gradient(90deg, rgba(255,150,50,0.015) 0%, rgba(220,60,80,0.015) 50%, rgba(200,80,120,0.01) 100%);
+            box-shadow: 0 0 80px rgba(255,100,50,0.02);
+        }
+        .section-bg:nth-child(even)::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 60% 1px at 50% 0%, rgba(255,150,100,0.04) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        /* ===== Cards ===== */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,150,100,0.06);
+            border-radius: 1rem;
+            padding: 1.8rem;
+            transition: transform 0.35s cubic-bezier(0.22,1,0.36,1), border-color 0.35s, box-shadow 0.35s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,180,100,0.15);
+            box-shadow: 0 12px 40px rgba(255,100,50,0.04);
+        }
+        .card h3 { color: #ffd700; font-size: 1.1rem; margin-bottom: 0.8rem; font-weight: 600; }
+        .card p, .card li { color: rgba(255,255,255,0.6); font-size: 0.92rem; }
+        .card ul { list-style: none; padding: 0; }
+        .card ul li { padding: 0.3rem 0; padding-left: 1.2rem; position: relative; }
+        .card ul li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: rgba(255,215,0,0.3);
+        }
+
+        /* ===== Story ===== */
+        .story-text {
+            font-size: 1.05rem;
+            line-height: 2.1;
+            color: rgba(255,255,255,0.55);
+        }
+        .story-text p { margin-bottom: 1.2rem; }
+        .story-highlight { color: #ffd700; font-weight: 500; }
+
+        /* ===== Stats ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+        .stat-box {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,150,100,0.06);
+            border-radius: 0.8rem;
+            padding: 1.2rem 0.8rem;
+            text-align: center;
+            transition: border-color 0.3s, transform 0.3s;
+        }
+        .stat-box:hover {
+            border-color: rgba(255,215,0,0.15);
+            transform: translateY(-2px);
+        }
+        .stat-box .val {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #ffd700;
+            line-height: 1.2;
+        }
+        .stat-box .lbl {
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.35);
+            margin-top: 0.3rem;
+            letter-spacing: 0.03em;
+        }
+
+        /* ===== Controls ===== */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 0.8rem;
+        }
+        .key-hint {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(200,160,255,0.06);
+            border-radius: 0.7rem;
+            padding: 0.7rem 1rem;
+            transition: border-color 0.3s, background 0.3s;
+        }
+        .key-hint:hover {
+            border-color: rgba(255,215,0,0.15);
+            background: rgba(255,215,0,0.02);
+        }
+        .key-hint kbd {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2.4rem;
+            height: 2.4rem;
+            background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,215,0,0.03));
+            border: 1px solid rgba(255,215,0,0.15);
+            border-radius: 0.4rem;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #ffd700;
+        }
+        .key-hint .desc { font-size: 0.85rem; color: rgba(255,255,255,0.55); }
+
+        .controls-note {
+            margin-top: 2rem;
+            background: rgba(255,150,100,0.015);
+            border-radius: 0.8rem;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,150,100,0.04);
+        }
+        .controls-note p {
+            color: rgba(255,255,255,0.4);
+            font-size: 0.88rem;
+        }
+        .controls-note strong { color: #ffd700; font-weight: 500; }
+
+        /* ===== Difficulty ===== */
+        .difficulty { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.9rem; color: #ffd700; }
+
+        /* ===== Level Cards ===== */
+        .level-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(200,160,255,0.06);
+            border-radius: 1rem;
+            padding: 1.8rem;
+            margin-bottom: 1.5rem;
+            border-left: 3px solid rgba(255,215,0,0.2);
+            transition: transform 0.35s cubic-bezier(0.22,1,0.36,1), border-left-color 0.35s;
+        }
+        .level-card:hover {
+            transform: translateX(5px);
+            border-left-color: #ffd700;
+        }
+        .level-card h3 { color: #ffd700; font-size: 1.1rem; font-weight: 600; }
+        .level-card .meta {
+            color: rgba(255,255,255,0.3);
+            font-size: 0.82rem;
+            margin: 0.3rem 0 0.8rem;
+        }
+        .level-card p { color: rgba(255,255,255,0.55); font-size: 0.92rem; }
+        .level-card .condition { color: #ffd700; font-weight: 500; }
+
+        /* ===== Gallery ===== */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+        .gallery-item {
+            border-radius: 0.8rem;
+            overflow: hidden;
+            border: 1px solid rgba(255,150,100,0.06);
+            transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), border-color 0.3s, box-shadow 0.4s;
+            cursor: zoom-in;
+            background: rgba(30,10,15,0.4);
+            position: relative;
+        }
+        .gallery-item::after {
+            content: '🔍 点击查看大图';
+            position: absolute;
+            bottom: 0.8rem;
+            right: 1rem;
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .gallery-item:hover::after { opacity: 1; }
+        .gallery-item:hover {
+            transform: scale(1.02);
+            border-color: rgba(255,215,0,0.15);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .gallery-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.5s;
+        }
+        .gallery-item:hover img { transform: scale(1.05); }
+        .gallery-item .caption {
+            padding: 0.8rem 1rem;
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.4);
+            background: rgba(30,10,15,0.6);
+            border-top: 1px solid rgba(255,150,100,0.04);
+        }
+
+        /* ===== Lightbox ===== */
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(20,8,12,0.94);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s cubic-bezier(0.22,1,0.36,1);
+            padding: 2rem;
+            cursor: zoom-out;
+        }
+        .lightbox.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .lightbox img {
+            max-width: 92vw;
+            max-height: 90vh;
+            border-radius: 0.6rem;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.6), 0 0 40px rgba(255,150,100,0.06);
+            transform: scale(0.9);
+            transition: transform 0.4s cubic-bezier(0.22,1,0.36,1);
+            object-fit: contain;
+        }
+        .lightbox.active img { transform: scale(1); }
+        .lightbox .close {
+            position: absolute;
+            top: 1.5rem;
+            right: 2rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: rgba(255,255,255,0.4);
+            cursor: pointer;
+            transition: color 0.3s, transform 0.3s;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            border: none;
+            font-family: inherit;
+        }
+        .lightbox .close:hover {
+            color: #fff;
+            transform: rotate(90deg);
+            background: rgba(255,255,255,0.1);
+        }
+        .lightbox .counter {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.25);
+            font-size: 0.85rem;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            letter-spacing: 0.1em;
+        }
+        .lightbox .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3rem;
+            height: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: rgba(255,255,255,0.25);
+            cursor: pointer;
+            transition: color 0.3s, background 0.3s;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            font-family: inherit;
+            line-height: 1;
+        }
+        .lightbox .nav-btn:hover { color: #ffd700; background: rgba(255,255,255,0.06); }
+        .lightbox .nav-btn.prev { left: 1.5rem; }
+        .lightbox .nav-btn.next { right: 1.5rem; }
+
+        /* ===== Recharge ===== */
+        .recharge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+        .recharge-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(200,160,255,0.06);
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.35s cubic-bezier(0.22,1,0.36,1), border-color 0.35s, box-shadow 0.35s;
+            position: relative;
+            overflow: hidden;
+        }
+        .recharge-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,215,0,0.2), transparent);
+        }
+        .recharge-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,215,0,0.12);
+            box-shadow: 0 12px 40px rgba(255,215,0,0.03);
+        }
+        .recharge-card.featured::before {
+            background: linear-gradient(90deg, transparent, #ff8844, transparent);
+        }
+        .recharge-card .price { font-size: 2.8rem; font-weight: 800; color: #ffd700; line-height: 1.2; }
+        .recharge-card .price-sub { color: rgba(255,255,255,0.25); font-size: 0.8rem; margin-top: 0.2rem; }
+        .recharge-card .divider {
+            width: 2rem; height: 1px;
+            background: rgba(255,255,255,0.08);
+            margin: 1rem auto;
+        }
+        .recharge-card ul { list-style: none; padding: 0; }
+        .recharge-card ul li {
+            padding: 0.35rem 0;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.88rem;
+        }
+        .recharge-card ul li::before { content: '✦ '; color: rgba(255,215,0,0.4); }
+
+        .code-block {
+            background: rgba(30,10,15,0.4);
+            border: 1px solid rgba(255,150,100,0.04);
+            border-radius: 0.7rem;
+            padding: 1.2rem 1.5rem;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 0.82rem;
+            color: rgba(255,215,0,0.6);
+            letter-spacing: 0.08em;
+            word-break: break-all;
+            margin: 1.2rem 0;
+            line-height: 2;
+        }
+
+        /* ===== Footer ===== */
+        footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid rgba(255,150,100,0.04);
+            color: rgba(255,255,255,0.15);
+            font-size: 0.78rem;
+        }
+        footer .heart { color: rgba(255,215,0,0.3); }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            section { padding: 3rem 1.2rem; }
+            .card-grid, .gallery-grid { grid-template-columns: 1fr; }
+            .controls-grid { grid-template-columns: 1fr 1fr; }
+            .lightbox .nav-btn { width: 2.5rem; height: 2.5rem; font-size: 1.2rem; }
+            .lightbox .nav-btn.prev { left: 0.5rem; }
+            .lightbox .nav-btn.next { right: 0.5rem; }
+        }
+        @media (max-width: 480px) {
+            .controls-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .hero h1 { font-size: clamp(2.2rem, 12vw, 3.5rem); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== Particles Canvas ===== -->
+<canvas id="particles"></canvas>
+
+<!-- ===== Lightbox ===== -->
+<div class="lightbox" id="lightbox" role="dialog" aria-label="图片预览">
+    <button class="close" id="lbClose" aria-label="关闭">✕</button>
+    <button class="nav-btn prev" id="lbPrev" aria-label="上一张">‹</button>
+    <img src="" alt="预览大图" id="lbImg">
+    <button class="nav-btn next" id="lbNext" aria-label="下一张">›</button>
+    <div class="counter" id="lbCounter"></div>
+</div>
+
+<!-- ==================== HERO ==================== -->
+<header class="hero">
+    <div class="hero-content">
+        <div class="hero-badge">✦ Qt6 · CMake · 2D 闯关 ✦</div>
+        <h1>孤勇骑士</h1>
+        <p class="subtitle">在黑暗笼罩的 <strong>艾瑟兰大陆</strong>，一位骑士肩负着最后的希望</p>
+        <div class="tech-stack">
+            <span>Qt 6</span>
+            <span>CMake</span>
+            <span>MinGW 64</span>
+            <span>2D Game</span>
+            <span>Windows</span>
+        </div>
+    </div>
+    <div class="scroll-indicator">
+        <span>滚动探索</span>
+        <div class="arrow"></div>
+    </div>
+</header>
+
+<!-- ==================== NAV ==================== -->
+<nav>
+    <a href="#story">背景故事</a>
+    <a href="#intro">项目介绍</a>
+    <a href="#gallery">游戏截图</a>
+    <a href="#role">角色</a>
+    <a href="#controls">操作</a>
+    <a href="#levels">关卡</a>
+    <a href="#recharge">充值</a>
+    <a href="#tips">建议</a>
+</nav>
+
+<!-- ===== 01 背景故事 ===== -->
+<div class="section-bg">
+<section id="story">
+    <div class="section-header">
+        <h2 class="section-title"><span class="num">01</span> 故事背景</h2>
+        <div class="section-divider"></div>
+    </div>
+    <div class="story-text">
+        <p>在遥远的 <span class="story-highlight">艾瑟兰大陆</span>，黑暗势力席卷而来，怪物肆虐，生灵涂炭，曾经繁荣的王国沦为废墟。传说中，唯有 <span class="story-highlight">一位身披银甲、手握长剑的孤勇骑士</span>，能够抵御黑暗、拯救大陆。</p>
+        <p>这位骑士身负使命，带着仅有的 <span style="color:#ff6b6b;font-weight:500;">15 点血量</span> 和 <span style="color:#4fc3f7;font-weight:500;">5 点护盾</span>，孤身闯入怪物巢穴，一路闯关斩将，誓要击败最终 BOSS，夺回大陆的光明。每一次攻击、每一次翻滚、每一次回血，都是他向黑暗抗争的勇气证明。</p>
+    </div>
+</section>
+</div>
+
+<!-- ===== 02 项目介绍 ===== -->
+<div class="section-bg">
+<section id="intro">
+    <div class="section-header">
+        <h2 class="section-title"><span class="num">02</span> 项目介绍</h2>
+        <div class="section-divider"></div>
+    </div>
+    <p class="section-desc">基于 <strong style="color:#ffd700;">Qt6 + CMake</strong> 开发的 2D 闯关小游戏，包含玩家移动、子弹攻击、技能释放、怪物 AI、Boss 战斗、多关卡系统、充值兑换系统及角色翻滚特效，玩法丰富且操作流畅。</p>
+
+    <div class="card-grid" style="margin-top:2rem;">
+        <div class="card">
+            <h3>⚙️ 运行环境</h3>
+            <ul>
+                <li>Qt 6 及以上</li>
+                <li>MinGW 64 位编译器</li>
+                <li>Windows 系统</li>
+            </ul>
+        </div>
+        <div class="card">
+            <h3>📁 使用方法</h3>
+            <ul>
+                <li>用 Qt Creator 打开 CMakeLists.txt</li>
+                <li>选择 MinGW 套件</li>
+                <li>构建项目后点击运行</li>
+            </ul>
+        </div>
+        <div class="card">
+            <h3>🤖 开发辅助</h3>
+            <ul>
+                <li>豆包 —— 游戏素材绘图</li>
+                <li><strong style="color:#ffd700;">ChatGPT 5.3</strong> —— UI 界面设计与前端开发</li>
+            </ul>
+        </div>
+    </div>
+</section>
+</div>
+
+<!-- ===== 03 游戏截图 ===== -->
+<div class="section-bg">
+<section id="gallery" style="max-width:1200px;">
+    <div class="section-header">
+        <h2 class="section-title"><span class="num">03</span> 游戏截图</h2>
+        <div class="section-divider"></div>
+    </div>
+    <p class="section-desc">点击任意图片可查看高清大图</p>
+
+    <div class="gallery-grid" id="galleryGrid">
+        <div class="gallery-item" data-index="0">
+            <img src="屏幕截图 2026-05-10 192438.png" alt="游戏主界面" loading="lazy">
+            <div class="caption">🎮 游戏主界面 / 关卡选择</div>
+        </div>
+        <div class="gallery-item" data-index="1">
+            <img src="屏幕截图 2026-05-10 192521.png" alt="第一关战斗场景" loading="lazy">
+            <div class="caption">⚔️ 第一关战斗场景 — 怪物对战</div>
+        </div>
+        <div class="gallery-item" data-index="2">
+            <img src="屏幕截图 2026-05-10 192622.png" alt="UI界面" loading="lazy">
+            <div class="caption">🖥️ UI 界面 / 充值兑换窗口</div>
+        </div>
+        <div class="gallery-item" data-index="3">
+            <img src="屏幕截图 2026-05-10 192706.png" alt="第二关" loading="lazy">
+            <div class="caption">💣 第二关 — 炸弹人 &amp; 怪物群</div>
+        </div>
+        <div class="gallery-item" data-index="4">
+            <img src="屏幕截图 2026-05-10 192750.png" alt="第三关BOSS" loading="lazy">
+            <div class="caption">👑 第三关 — BOSS 决战</div>
+        </div>
+        <div class="gallery-item" data-index="5">
+            <img src="屏幕截图 2026-05-10 192810.png" alt="游戏胜利" loading="lazy">
+            <div class="caption">🏆 游戏胜利 / 结算画面</div>
+        </div>
+    </div>
+
+    <div style="margin-top:1.2rem;text-align:center;font-size:0.82rem;color:rgba(255,255,255,0.2);">
+        UI 界面由 <strong style="color:rgba(255,215,0,0.4);">ChatGPT 5.3</strong> 辅助设计 · 游戏素材由豆包绘制
+    </div>
+</section>
+</div>
+
+<!-- ===== 04 角色介绍 ===== -->
+<div class="section-bg">
+<section id="role">
+    <div class="section-header">
+        <h2 class="section-title"><span class="num">04</span> 角色介绍</h2>
+        <div class="section-divider"></div>
+    </div>
+
+    <!-- Knight -->
+    <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:1.2rem;">
+        <span style="font-size:1.8rem;">🛡️</span>
+        <h3 style="color:#ffd700;font-size:1.25rem;font-weight:600;">骑士 · 玩家角色</h3>
+    </div>
+    <div class="stats-grid" style="margin-bottom:2.5rem;">
+        <div class="stat-box"><div class="val">15</div><div class="lbl">基础血量</div></div>
+        <div class="stat-box"><div class="val">5</div><div class="lbl">基础护盾</div></div>
+        <div class="stat-box"><div class="val">1</div><div class="lbl">基础攻击力</div></div>
+        <div class="stat-box"><div class="val">30s</div><div class="lbl">技能冷却</div></div>
+        <div class="stat-box"><div class="val">5s</div><div class="lbl">技能持续</div></div>
+    </div>
+
+    <!-- Monsters -->
+    <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:1.2rem;">
+        <span style="font-size:1.8rem;">👹</span>
+        <h3 style="color:#ff6b6b;font-size:1.25rem;font-weight:600;">怪物角色</h3>
+    </div>
+    <div class="card-grid">
+        <div class="card"><h3>怪物 1</h3><p>血量 10 &nbsp;·&nbsp; 攻击力 1</p></div>
+        <div class="card"><h3>怪物 2</h3><p>血量 12 &nbsp;·&nbsp; 攻击力 2 <span style="color:rgba(255,255,255,0.3);font-size:0.8rem;">（Boss 召唤）</span></p></div>
+        <div class="card"><h3>怪物 3</h3><p>血量 50 &nbsp;·&nbsp; 攻击力 1</p></div>
+        <div class="card"><h3>怪物 4</h3><p>血量 25 &nbsp;·&nbsp; 攻击力 3</p></div>
+        <div class="card" style="border-color:rgba(255,107,107,0.15);">
+            <h3 style="color:#ff6b6b;">💣 炸弹人</h3>
+            <p>免疫所有攻击！碰撞扣除全部护盾（有护盾时）或 5 点血量</p>
+        </div>
+        <div class="card" style="border-color:rgba(255,215,0,0.15);">
+            <h3 style="color:#ffd700;">👑 Boss</h3>
+            <p>血量 240 &nbsp;·&nbsp; 攻击力 9 &nbsp;·&nbsp; 定期召唤怪物 2</p>
+        </div>
+    </div>
+</section>
+</div>
+
+<!-- ===== 05 操作按键 ===== -->
+<div class="section-bg">
+<section id="controls">
+    <div class="section-header">
+        <h2 class="section-title"><span class="num">05</span> 操作按键</h2>
+        <div class="section-divider"></div>
+    </div>
+
+    <div class="controls-grid">
+        <div class="key-hint"><kbd>W</kbd><span class="desc">角色向上移动</span></div>
+        <div class="key-hint"><kbd>S</kbd><span class="desc">角色向下移动</span></div>
+        <div class="key-hint"><kbd>A</kbd><span class="desc">角色向左移动</span></div>
+        <div class="key-hint"><kbd>D</kbd><span class="desc">角色向右移动</span></div>
+        <div class="key-hint"><kbd>K</kbd><span class="desc">攻击子弹 · 伤害 1 · 无冷却</span></div>
+        <div class="key-hint"><kbd>L</kbd><span class="desc">技能攻击 · 冷却 30s</span></div>
+        <div class="key-hint"><kbd>P</kbd><span class="desc">回血技能 · 冷却 20s</span></div>
+        <div class="key-hint"><kbd>M</kbd><span class="desc">翻滚 · 32 帧动画 · 躲避攻击</span></div>
+    </div>
+
+    <div class="controls-note">
+        <p>💡 骑士使用 <strong>8 张图片循环播放</strong> 使移动效果更逼真；翻滚采用 <strong>32 张图片循环播放</strong>，动作流畅逼真，可灵活躲避怪物攻击。</p>
+    </div>
+</section>
+</div>
+
+<!-- ===== 06 关卡设定 ===== -->
+<div class="section-bg">
+<section id="levels">
+    <div class="section-header">
+        <h2 class="section-title"><span class="num">06</span> 关卡设定</h2>
+        <div class="section-divider"></div>
+    </div>
+
+    <div class="level-card">
+        <h3>第一关：小怪初现</h3>
+        <div class="meta">
+            <span class="difficulty">★★☆☆☆</span>
+            &nbsp;·&nbsp; 新手适应关
+        </div>
+        <p>仅刷新基础小怪，数量较少、攻击较低，适合新手熟悉操作，掌握移动、攻击、翻滚和回血技巧。</p>
+        <p style="margin-top:0.5rem;"><span class="condition">▸ 通关条件：</span>消灭关卡内所有怪物。</p>
+    </div>
+
+    <div class="level-card" style="border-left-color:rgba(255,165,0,0.3);">
+        <h3>第二关：险象环生</h3>
+        <div class="meta">
+            <span class="difficulty">★★★☆☆</span>
+            &nbsp;·&nbsp; 新增炸弹人
+        </div>
+        <p>小怪数量增多、种类增加，攻击频率提升，新增特殊怪物 <strong style="color:#ff6b6b;">炸弹人</strong>（免疫攻击，碰撞即扣护盾/血量）。</p>
+        <p style="margin-top:0.5rem;"><span class="condition">▸ 通关条件：</span>消灭除炸弹人外的所有怪物。</p>
+    </div>
+
+    <div class="level-card" style="border-left-color:rgba(255,215,0,0.3);">
+        <h3>第三关：BOSS 决战</h3>
+        <div class="meta">
+            <span class="difficulty">★★★★★</span>
+            &nbsp;·&nbsp; 终极挑战
+        </div>
+        <p>终极 BOSS 关卡，<strong style="color:#ffd700;">BOSS 血量 240、攻击力 9</strong>，会定期召唤怪物 2，发射子弹多。</p>
+        <p style="margin-top:0.5rem;"><span class="condition">▸ 通关条件：</span>击败 BOSS。</p>
+        <p style="color:rgba(255,255,255,0.3);font-size:0.85rem;margin-top:0.5rem;">💡 建议：灵活走位，绕 BOSS 移动，及时清理召唤小怪，合理使用回血技能。</p>
+    </div>
+</section>
+</div>
+
+<!-- ===== 07 充值系统 ===== -->
+<div class="section-bg">
+<section id="recharge">
+    <div class="section-header">
+        <h2 class="section-title"><span class="num">07</span> 充值系统 &amp; 奖励兑换</h2>
+        <div class="section-divider"></div>
+    </div>
+    <p class="section-desc">赞助开发，获得属性加成，助你更快击败 BOSS</p>
+
+    <div class="recharge-grid" style="margin-top:0.5rem;">
+        <div class="recharge-card">
+            <div class="price">¥5</div>
+            <div class="price-sub">赞助档位</div>
+            <div class="divider"></div>
+            <ul>
+                <li>血量提升至 <strong style="color:#ff6b6b;">30 点</strong></li>
+                <li>攻击力提升至 <strong style="color:#ffd700;">2 点</strong></li>
+                <li>赞助后获取兑换码</li>
+            </ul>
+        </div>
+        <div class="recharge-card featured">
+            <div class="price">¥6</div>
+            <div class="price-sub">赞助档位</div>
+            <div class="divider"></div>
+            <ul>
+                <li>血量提升至 <strong style="color:#ff6b6b;">100 点</strong></li>
+                <li>攻击力提升至 <strong style="color:#ffd700;">4 点</strong></li>
+                <li>赞助后获取兑换码</li>
+            </ul>
+        </div>
+    </div>
+
+    <div style="margin-top:2.5rem;">
+        <h3 style="color:rgba(255,255,255,0.35);font-size:0.85rem;margin-bottom:0.6rem;letter-spacing:0.05em;">兑换码列表</h3>
+        <div class="code-block">
+ONE00y551 &nbsp; ONE00772 &nbsp; ONE00399 &nbsp; ONE00777554 &nbsp; ONEuuug005<br>
+THRygf001 &nbsp; THRgff002 &nbsp; THdghR003 &nbsp; THffR004 &nbsp; TddHR005
+        </div>
+        <p style="color:rgba(255,255,255,0.2);font-size:0.8rem;">点击游戏内充值按钮，跳转至爱发电平台完成赞助后获取兑换码，在游戏内兑换即可领取属性加成奖励。</p>
+    </div>
+</section>
+</div>
+
+<!-- ===== 08 玩法建议 ===== -->
+<div class="section-bg">
+<section id="tips">
+    <div class="section-header">
+        <h2 class="section-title"><span class="num">08</span> 玩法建议</h2>
+        <div class="section-divider"></div>
+    </div>
+
+    <div class="card-grid">
+        <div class="card">
+            <h3>第一关 · 小怪初现</h3>
+            <p>最简单的一关，略微走位即可通关。注意躲避怪物子弹，被包围时可开启技能（J 键）先秒掉部分怪物，减少受击风险。</p>
+        </div>
+        <div class="card">
+            <h3>第二关 · 险象环生</h3>
+            <p>核心注意点：<strong style="color:#ff6b6b;">躲避炸弹人</strong>！很多玩家第一次容易因忽略炸弹人的碰撞伤害而翻车。优先消灭小怪，全程绕开炸弹人，无需尝试攻击（免疫）。</p>
+        </div>
+        <div class="card">
+            <h3>第三关 · BOSS 决战</h3>
+            <p>保持灵活走位绕 BOSS 移动，最大限度避免被子弹打中。BOSS 定期召唤小怪，需及时释放技能（J / L 键）清理，避免被夹击。合理利用回血（P 键），维持血量。</p>
+        </div>
+    </div>
+</section>
+</div>
+
+<!-- ==================== FOOTER ==================== -->
+<footer>
+    <p>孤勇骑士 — 基于 Qt6 + CMake 的 2D 闯关小游戏</p>
+    <p style="margin-top:0.4rem;">UI 设计：ChatGPT 5.3 &nbsp;·&nbsp; 素材绘制：豆包 &nbsp;·&nbsp; 开发制作：独立开发者</p>
+    <p style="margin-top:0.4rem;">制作不易，感谢支持 <span class="heart">❤</span></p>
+</footer>
+
+<!-- ===== Scripts ===== -->
+<script>
+// ===== Particles =====
+(function() {
+    const c = document.getElementById('particles');
+    const ctx = c.getContext('2d');
+    let w, h, particles = [];
+    function resize() { w = c.width = window.innerWidth; h = c.height = window.innerHeight; }
+    window.addEventListener('resize', resize);
+    resize();
+    const count = Math.min(100, Math.floor(w * h / 10000));
+    for (let i = 0; i < count; i++) {
+        const t = Math.random();
+        let hue;
+        if (t < 0.4) hue = 25 + Math.random() * 15;       // 橙黄
+        else if (t < 0.7) hue = 5 + Math.random() * 15;   // 橙红
+        else hue = 330 + Math.random() * 20;               // 粉紫
+        particles.push({
+            x: Math.random() * w, y: Math.random() * h,
+            vx: (Math.random() - 0.5) * 0.35,
+            vy: (Math.random() - 0.5) * 0.35,
+            r: Math.random() * 2 + 0.5,
+            a: Math.random() * 0.25 + 0.05,
+            hue: hue
+        });
+    }
+    function draw() {
+        ctx.clearRect(0, 0, w, h);
+        for (const p of particles) {
+            p.x += p.vx; p.y += p.vy;
+            if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+            if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${p.hue},80%,70%,${p.a})`;
+            ctx.fill();
+        }
+        requestAnimationFrame(draw);
+    }
+    draw();
+})();
+
+// ===== Lightbox =====
+(function() {
+    const lb = document.getElementById('lightbox');
+    const img = document.getElementById('lbImg');
+    const counter = document.getElementById('lbCounter');
+    const close = document.getElementById('lbClose');
+    const prev = document.getElementById('lbPrev');
+    const next = document.getElementById('lbNext');
+
+    const items = document.querySelectorAll('.gallery-item');
+    const srcs = Array.from(items).map(el =>
+        el.querySelector('img').getAttribute('src')
+    );
+    const caps = Array.from(items).map(el =>
+        el.querySelector('.caption').textContent.trim()
+    );
+    let current = 0;
+
+    function open(idx) {
+        current = idx;
+        img.src = srcs[idx];
+        counter.textContent = `${idx + 1} / ${srcs.length}`;
+        lb.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLb() {
+        lb.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function go(d) {
+        current = (current + d + srcs.length) % srcs.length;
+        open(current);
+    }
+
+    items.forEach((el, i) => {
+        el.addEventListener('click', () => open(i));
+    });
+
+    close.addEventListener('click', closeLb);
+    prev.addEventListener('click', (e) => { e.stopPropagation(); go(-1); });
+    next.addEventListener('click', (e) => { e.stopPropagation(); go(1); });
+    lb.addEventListener('click', closeLb);
+    img.addEventListener('click', (e) => e.stopPropagation());
+
+    document.addEventListener('keydown', (e) => {
+        if (!lb.classList.contains('active')) return;
+        if (e.key === 'Escape') closeLb();
+        if (e.key === 'ArrowLeft') go(-1);
+        if (e.key === 'ArrowRight') go(1);
+    });
+})();
+</script>
+
+</body>
+</html>

@@ -105,7 +105,7 @@ GameWindow::GameWindow(int level,QWidget *parent)
     m_healTotalCd = 20000;
     m_healLeftCd  = 0;
     m_healEffect.setVolume(0.8);
-    // 纯代码内置模拟回血音效，不用任何外部文件
+
     bossAnimIndex = 0;
     bossAnimDelay = 0;
     bossFaceRight = true;
@@ -136,24 +136,19 @@ GameWindow::GameWindow(int level,QWidget *parent)
     m_gameMusic = new QMediaPlayer(this);
     m_hurtSound = new QMediaPlayer(this);
     m_bossgame = new QMediaPlayer(this);
-    // 为每个QMediaPlayer创建独立的音频输出
     m_gameAudio = new QAudioOutput(this);
     m_hurtAudio = new QAudioOutput(this);
     m_gameMusic->setAudioOutput(m_gameAudio);
     m_hurtSound->setAudioOutput(m_hurtAudio);
      m_bossaudio = new QAudioOutput(this);
     m_bossgame->setAudioOutput(m_bossaudio);
-    // 加载文件（用setSource替代setMedia）
     m_gameMusic->setSource(QUrl("qrc:/shengyin/shoujiha (2).mp3"));
     m_hurtSound->setSource(QUrl("qrc:/shengyin/shouji.mp3"));
     m_bossgame->setSource(QUrl("qrc:/shengyin/haha.mp3")); // 你自己改路径
-    // 音量控制（通过QAudioOutput）
-    m_gameAudio->setVolume( g_gameBgmVolume);  // 0-1之间，对应50%
-    m_hurtAudio->setVolume(g_hurtVolume);  // 100%
-    // 回血音效（QSoundEffect用setSource）
+    m_gameAudio->setVolume( g_gameBgmVolume);
+    m_hurtAudio->setVolume(g_hurtVolume);
     m_bossaudio->setVolume(0.5);
     m_gameMusic->play();
-    // 启动游戏循环（必须加！否则画面完全不动）
     gametimer = new QTimer(this);
     connect(gametimer, &QTimer::timeout, this, &GameWindow::gameupdate);
     gametimer->start(16);
@@ -167,8 +162,6 @@ public:
         setFixedSize(800, 500);
         setWindowTitle("游戏失败");
         setText("废物！游戏失败\n骑士阵亡");
-
-        // 关键：显示图片！
         QPixmap pix(":/monster/nainai.png");
         setIconPixmap(pix.scaled(200, 200, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
@@ -207,13 +200,9 @@ void GameWindow::drawSkill(QPainter *p, int x, int y, int size,
     p->drawPixmap(rect, icon.scaled(size, size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
     if (leftMs > 0)
     {
-        // 黑色遮罩
         p->setBrush(QColor(0, 0, 0, 160));
         p->setPen(Qt::NoPen);
         p->drawRect(rect);
-
-        // 关键转成整数秒 直接向下取整
-
         int sec = leftMs / 1000;
         p->setPen(Qt::white);
         QFont f("微软雅黑", 22, QFont::Bold);
@@ -276,8 +265,6 @@ public:
         setFixedSize(800, 500);
         setWindowTitle("游戏胜利");
         setText("恭喜你！游戏胜利\n成功通关！");
-
-        // 胜利图片（你自己改路径也行）
         QPixmap pix(":/monster/naima.png"); // 你可以换成你的胜利图片
         setIconPixmap(pix.scaled(200, 200, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
@@ -288,9 +275,7 @@ void GameWindow::monsterdead()
     clearLevel();
     WinMessageBox winBox;
     winBox.exec();
-
     if (m_gameMusic) m_gameMusic->stop();
-    // 这里可以加胜利后的逻辑
     emit monsterdie();
 }
 
@@ -323,7 +308,7 @@ void GameWindow::shootbullet(){
     }
     if (!nearest)
         return;
-    // 2. 计算指向最近怪物的方向（直线）
+    // 2. 计算指向最近怪物的方向
     int tx = nearest->getX() + 25;
     int ty = nearest->getY() + 25;
 
@@ -350,13 +335,13 @@ void GameWindow::level1(){
     obs1->setpicture(":/obstacle/obstacle1(2).jpg");
     m_obstacles.append(obs1);
 
-    // ---------- 障碍物 2 ----------
+    // 障碍物 2
     obstacle* obs2 = new obstacle;
     obs2->setpoints(1200, 200);
     obs2->setpicture(":/obstacle/obstacle1(2).jpg");
     m_obstacles.append(obs2);
 
-    // ---------- 障碍物 3 ----------
+    // 障碍物 3
     obstacle* obs3 = new obstacle;
     obs3->setpoints(300, 700);
     obs3->setpicture(":/obstacle/obstacle1(2).jpg");
@@ -460,13 +445,13 @@ void GameWindow::paintEvent(QPaintEvent*event) {
     {
         // 取当前方向、当前帧的图片
         const QPixmap &frame = rollFrames[rollDirIndex][rollAnimFrame];
-        // 绘制（和你原来的骑士位置一致）
+        // 绘制
         painter.drawPixmap(qishi.getX(), qishi.getY(), frame);
 
     }
     else
     {
-        qishi.draw(painter); // 正常状态用原来的绘制
+        qishi.draw(painter);
     }
     for (auto* monster : m_monsterList) {
         // 如果是 BOSS，专门画左右行走动画
@@ -492,25 +477,25 @@ void GameWindow::paintEvent(QPaintEvent*event) {
     for (obstacle* obs : m_obstacles) {
         obs->draw(painter);
     }
-    painter.setRenderHint(QPainter::Antialiasing); // 抗锯齿，让血条更顺滑
+    painter.setRenderHint(QPainter::Antialiasing);
 
-    //  1. 绘制血条背景（灰色，代表空血）
+    //  1. 绘制血条背景
     QRect hpBgRect(20, 20, 200, 30);
-    painter.setBrush(QColor(80, 80, 80)); // 背景灰色
-    painter.setPen(QColor(200, 200, 200)); // 边框浅灰色
+    painter.setBrush(QColor(80, 80, 80));
+    painter.setPen(QColor(200, 200, 200));
     painter.drawRoundedRect(hpBgRect, 5, 5);
 
-    // 2. 绘制当前血量条（红色，随血量变化）
-    // 计算血量条宽度：(当前血量/最大血量)*背景宽度
+    // 2. 绘制当前血量条
+    // 计算血量条宽度：
     int hpbarwidth = (qishi.gethit_points() * 1.0 / qishi.hitpointsmax) * hpBgRect.width();
-    QRect hpbarrect(20, 20, hpbarwidth, 30); // 和背景位置一致，宽度随血量变
-    painter.setBrush(QColor(220, 0, 0)); // 血量条红色
-    painter.setPen(Qt::NoPen); // 血量条无边框
+    QRect hpbarrect(20, 20, hpbarwidth, 30);
+    painter.setBrush(QColor(220, 0, 0));
+    painter.setPen(Qt::NoPen);
     painter.drawRoundedRect(hpbarrect, 5, 5);
 
     // 3. 绘制血量数值
-    painter.setPen(Qt::white); // 文字白色
-    painter.setFont(QFont("微软雅黑", 12, QFont::Bold)); // 字体+大小+加粗
+    painter.setPen(Qt::white);
+    painter.setFont(QFont("微软雅黑", 12, QFont::Bold));
     // 文字位置：血条正中间
     QString hpText = QString("%1/%2").arg(qishi.gethit_points()).arg(qishi.hitpointsmax);
     painter.drawText(hpBgRect, Qt::AlignCenter, hpText);
@@ -519,11 +504,9 @@ void GameWindow::paintEvent(QPaintEvent*event) {
     painter.setBrush(QColor(60, 60, 80));
     painter.setPen(QColor(180, 180, 200));
     painter.drawRoundedRect(shieldBgRect, 5, 5);
-    // 当前护盾条
-    // 护盾最大值是5，计算宽度：(当前护盾/最大护盾)*背景宽度
     int shieldBarWidth = (qishi.getbarrier() * 1.0 / 5.0 * shieldBgRect.width());
     QRect shieldBarRect(20, shieldBgRect.y(), shieldBarWidth, 30);
-    painter.setBrush(QColor(0, 150, 255)); // 天蓝色护盾条
+    painter.setBrush(QColor(0, 150, 255));
     painter.setPen(Qt::NoPen);
     painter.drawRoundedRect(shieldBarRect, 5, 5);
     // 护盾数值（5/5）
@@ -540,23 +523,21 @@ void GameWindow::paintEvent(QPaintEvent*event) {
             }
         }
         if(boss!=nullptr){
-            painter.setRenderHint(QPainter::Antialiasing); // 抗锯齿
+            painter.setRenderHint(QPainter::Antialiasing);
 
             // 1. 绘制血条背景（灰色，代表空血）
-            QRect bosshpBgRect(400, 20, 400, 30); // 位置(20,20)，宽200，高30
-            painter.setBrush(QColor(80, 80, 80)); // 背景灰色
-            painter.setPen(QColor(200, 200, 200)); // 边框浅灰色
-            painter.drawRoundedRect(bosshpBgRect, 5, 5); // 圆角矩形
+            QRect bosshpBgRect(400, 20, 400, 30);
+            painter.setBrush(QColor(80, 80, 80));
+            painter.setPen(QColor(200, 200, 200));
+            painter.drawRoundedRect(bosshpBgRect, 5, 5);
             int hpbaarwidth = (boss->gethit_points() * 1.0 / 240.0) * bosshpBgRect.width();
-            QRect hpbaarrect(400, 20, hpbaarwidth, 30); // 和背景位置一致，宽度随血量变
-            painter.setBrush(QColor(220, 0, 0)); // 血量条红色
-            painter.setPen(Qt::NoPen); // 血量条无边框
+            QRect hpbaarrect(400, 20, hpbaarwidth, 30);
+            painter.setBrush(QColor(220, 0, 0));
+            painter.setPen(Qt::NoPen);
             painter.drawRoundedRect(hpbaarrect, 5, 5);
-
-            // 绘制血量数值
             painter.setPen(Qt::white); // 文字白色
-            painter.setFont(QFont("微软雅黑", 12, QFont::Bold)); // 字体+大小+加粗
-            // 文字位置：血条正中间
+            painter.setFont(QFont("微软雅黑", 12, QFont::Bold));
+
             QString hpText = QString("%1/%2").arg(boss->gethit_points()).arg(240.0);
             painter.drawText(bosshpBgRect, Qt::AlignCenter, hpText);
             QRect shieldBgRect(20, bosshpBgRect.y() + bosshpBgRect.height() + 10, 200, 30);
@@ -577,8 +558,6 @@ void GameWindow::clearLevel()
     qDeleteAll(m_monsterList);
     m_monsterList.clear();qDeleteAll(m_bullets);
     m_bullets.clear();
-        // 子弹只清空列表
-        // 重置关卡相关变量
     qDeleteAll(m_obstacles);
     m_obstacles.clear();
         time2 = 0;
@@ -641,19 +620,14 @@ void GameWindow::gameupdate(){
             m_healTotalCd=0;
         }
     }
-
-    // 翻滚逻辑
-    // ===================== 最终丝滑8方向翻滚 =====================
-    // 翻滚逻辑
-    // ===================== 【丝滑翻滚位移 —— 完全不闪现】 =====================
     static int rollAnimDelay = 0;
 
     if (rollCdTimer > 0) rollCdTimer--;
 
     if (isRolling)
     {
-        // 固定每帧移动一点点，绝对不闪现
-        float speed = 14.5f;       // 慢一点，平滑
+
+        float speed = 14.5f;
         float diag = 14.5f;       // 斜向速度
         float moveX = 0, moveY = 0;
 
@@ -673,7 +647,7 @@ void GameWindow::gameupdate(){
         qishi.setX(qishi.getX() + moveX);
         qishi.setY(qishi.getY() + moveY);
 
-        // 控制翻滚距离：距离短一点、时间长一点，就不会闪现
+
         rollRemain -= speed;
         if (rollRemain <= 0) {
             isRolling = false;
